@@ -42,8 +42,7 @@
                     <td>{{ h }}</td>
                     <td>
                         <select>
-                            <option>Time</option>
-                            <option>Key</option>
+                            <option v-for="opt in mapOptions" :value="opt.id">{{ opt.value }}</option>
                         </select>
                     </td>
                 </tr>
@@ -62,6 +61,13 @@ export default {
     },
     data () {
         return {
+            mapOptions : [
+                {"id":1, "value":"Penguasaan Materi"},
+                {"id":2, "value":"Sistematika Penyajian"},
+                {"id":3, "value":"Gaya atau metode penyajian"},
+                {"id":4, "value":"Pengaturan Waktu"},
+                {"id":5, "value":"Pengguaan Alat Bantu"},
+            ],
             spreadsheetsID: '',
             spreadsheetsResp: '',
             spreadsheetsHeaders : [],
