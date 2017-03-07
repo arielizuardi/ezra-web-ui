@@ -2,20 +2,30 @@
 
 <div class="spreadsheets">
     <!--Add buttons to initiate auth sequence and sign out-->
-    <div class="mdl-grid">
-        <g-signin-button
-        :params="googleSignInParams"
-        @success="onSignInSuccess"
-        @error="onSignInError"
-        v-show="!user.authenticated">
-        Sign in with Google
-        </g-signin-button>
+    <g-signin-button
+    :params="googleSignInParams"
+    @success="onSignInSuccess"
+    @error="onSignInError"
+    v-show="!user.authenticated">
+    Sign in with Google
+    </g-signin-button>
 
-        <div class="mdl-cell mdl-cell--12-col">
+    <div class="mdl-grid" v-show="user.authenticated">
+        <div class="mdl-cell mdl-cell--4-col">
 
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="sid" size="200" maxlength="200" v-model="spreadsheetsID">
                 <label class="mdl-textfield__label" for="sid">Spreadheet ID</label>
+            </div>
+            <br />
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="sname" size="200" maxlength="200" v-model="spreadsheetsName">
+                <label class="mdl-textfield__label" for="sname">Spreadsheets Name</label>
+            </div>
+            <br />
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="srange" size="200" maxlength="200" v-model="spreadsheetsRange">
+                <label class="mdl-textfield__label" for="srange">Range</label>
             </div>
 
             <br />
@@ -29,8 +39,8 @@
 
         </div>
 
-        <div class="mdl-cell mdl-cell--12-col">
-            <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+        <div class="mdl-cell mdl-cell--8-col">
+            <table v-show="spreadsheetsHeaders.length > 0" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
                 <thead>
                     <tr>
                         <th class="mdl-data-table__cell--non-numeric">Field</th>
@@ -68,7 +78,9 @@ export default {
                 {"id":4, "value":"Pengaturan Waktu"},
                 {"id":5, "value":"Pengguaan Alat Bantu"},
             ],
-            spreadsheetsID: '',
+            spreadsheetsID: '1pNHG0uPsMyaLjinREP4UYXXeVrUw0-3UCHZ7uxltIEQ',
+            spreadsheetsName: 'Form Responses 1',
+            spreadsheetsRange: 'A1:L',
             spreadsheetsResp: '',
             spreadsheetsHeaders : [],
             authResponse: {},
@@ -105,9 +117,8 @@ export default {
             }
         },
         getSpreadsheets: function() {
-            var sheet = 'Form Responses 1'
-            var range = sheet+'!'+ 'A1:L'
-            var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + this.spreadsheetsID + '/values/' + range
+            var values = this.spreadsheetsName+ '!'+ this.spreadsheetsRange
+            var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + this.spreadsheetsID + '/values/' + values
             this.$http.get(url, {headers: this.getAccessToken()}).then(response => {
                 var data = response.data
                 this.spreadsheetsHeaders = data.values[0]
