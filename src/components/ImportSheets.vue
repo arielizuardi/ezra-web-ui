@@ -14,33 +14,36 @@
         <div class="mdl-cell mdl-cell--4-col">
 
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="sid" size="200" maxlength="200" v-model="spreadsheetsID">
+                <input class="mdl-textfield__input" type="text" id="sid" size="200" maxlength="200" v-model="spreadsheets.id">
                 <label class="mdl-textfield__label" for="sid">Spreadheet ID</label>
             </div>
             <br />
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="sname" size="200" maxlength="200" v-model="spreadsheetsName">
+                <input class="mdl-textfield__input" type="text" id="sname" size="200" maxlength="200" v-model="spreadsheets.name">
                 <label class="mdl-textfield__label" for="sname">Spreadsheets Name</label>
             </div>
             <br />
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                <input class="mdl-textfield__input" type="text" id="srange" size="200" maxlength="200" v-model="spreadsheetsRange">
+                <input class="mdl-textfield__input" type="text" id="srange" size="200" maxlength="200" v-model="spreadsheets.range">
                 <label class="mdl-textfield__label" for="srange">Range</label>
             </div>
+
+
 
             <br />
             <button v-on:click="getSpreadsheets" v-show="user.authenticated" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
                 Get spreadsheets
             </button>
 
-            <button  v-on:click="logout" v-show="user.authenticated" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+            <button v-on:click="logout" v-show="user.authenticated" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
                 Logout
             </button>
 
         </div>
 
         <div class="mdl-cell mdl-cell--8-col">
-            <table v-show="spreadsheetsHeaders.length > 0" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <form v-on:submit="onSubmit">
+            <table v-show="spreadsheets.headers.length > 0" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
                 <thead>
                     <tr>
                         <th class="mdl-data-table__cell--non-numeric">Field</th>
@@ -48,16 +51,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                <tr v-for="h in spreadsheetsHeaders">
-                    <td>{{ h }}</td>
+                <tr v-for="(header, index) in spreadsheets.headers">
+                    <td>{{ header }}</td>
                     <td>
-                        <select>
+                        <select :name="selected[index]" v-model="selected[index]" >
                             <option v-for="opt in mapOptions" :value="opt.id">{{ opt.value }}</option>
                         </select>
                     </td>
                 </tr>
+
+                <tr>
+                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+                        Submit!
+                    </button>
+                </tr>
+
                 </tbody>
             </table>
+            </form>
         </div>
     </div>
 </div>
@@ -71,18 +82,33 @@ export default {
     },
     data () {
         return {
-            mapOptions : [
-                {"id":1, "value":"Penguasaan Materi"},
-                {"id":2, "value":"Sistematika Penyajian"},
-                {"id":3, "value":"Gaya atau metode penyajian"},
-                {"id":4, "value":"Pengaturan Waktu"},
-                {"id":5, "value":"Pengguaan Alat Bantu"},
+            selected:[],
+            presenters: [
+                {"id":1,"name":"Juferson Mangempis"},
+                {"id":2, "name":"Hendry Tjiu"},
+                {"id":3, "name":"Yvone Astri"}
             ],
-            spreadsheetsID: '1pNHG0uPsMyaLjinREP4UYXXeVrUw0-3UCHZ7uxltIEQ',
-            spreadsheetsName: 'Form Responses 1',
-            spreadsheetsRange: 'A1:L',
-            spreadsheetsResp: '',
-            spreadsheetsHeaders : [],
+            mapOptions : [
+                {"id":1, "value":"Timestamp"},
+                {"id":2, "value":"Nama Partisipan"},
+                {"id":3, "value":"D.A.T.E"},
+                {"id":4, "value":"Group COL"},
+                {"id":5, "value":"Penguasaan Materi"},
+                {"id":6, "value":"Sistematika Penyajian"},
+                {"id":7, "value":"Gaya atau metode penyajian"},
+                {"id":8, "value":"Pengaturan Waktu"},
+                {"id":9, "value":"Penggunaan Alat Bantu"},
+                {"id":10, "value":"Nilai keseluruhan"},
+                {"id":11, "value":"Hal-hal yang saya suka"},
+                {"id":12, "value":"Hal-hal yang saya harapkan"}
+            ],
+            spreadsheets: {
+                id: '1pNHG0uPsMyaLjinREP4UYXXeVrUw0-3UCHZ7uxltIEQ',
+                name: 'Form Responses 1',
+                range : 'A1:L',
+                headers: [],
+                values: []
+            },
             authResponse: {},
             user: {
                 access_token: '',
@@ -117,12 +143,15 @@ export default {
             }
         },
         getSpreadsheets: function() {
-            var values = this.spreadsheetsName+ '!'+ this.spreadsheetsRange
-            var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + this.spreadsheetsID + '/values/' + values
+            var values = this.spreadsheets.name + '!'+ this.spreadsheets.range
+            var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + this.spreadsheets.id + '/values/' + values
             this.$http.get(url, {headers: this.getAccessToken()}).then(response => {
-                var data = response.data
-                this.spreadsheetsHeaders = data.values[0]
+                this.spreadsheets.headers = response.data.values[0]
+                for (var i = 1; i < response.data.values.length; i++) {
+                    this.spreadsheets.values.push(response.data.values[i])
+                }
             }, response => {
+                alert('Whoops! Cannot connect to google spreadsheets. Please try again later.')
                 console.log(response.text())
             });
         },
@@ -138,7 +167,26 @@ export default {
         onSignInError: function(error) {
           // `error` contains any error occurred.
           console.log('Cannot sign-in', error)
-        }
+        },
+        onSubmit: function(e) {
+           e.preventDefault()
+
+           var mapping = []
+
+           for (var i = 0; i < this.spreadsheets.headers.length; i++) {
+               mapping.push({
+                   "field_id":i,
+                   "field_name": this.spreadsheets.headers[i],
+                   "map_id": this.selected[i]
+               })
+           }
+
+           var data = {
+               "mapping": mapping,
+               "values": this.spreadsheets.values
+           }
+
+       }
     },
 }
 </script>

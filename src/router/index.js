@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import ImportSheets from '@/components/ImportSheets'
+import GSheetImporter from '@/components/GSheetImporter'
 
 
 Vue.use(Router)
@@ -10,7 +10,7 @@ export default new Router({
   routes: [
     {
       path: '/',
-      component: ImportSheets
+      component: GSheetImporter
     }
   ]
 })
