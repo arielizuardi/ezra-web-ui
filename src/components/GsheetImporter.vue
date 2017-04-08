@@ -24,17 +24,24 @@
 
           <md-input-container>
               <label>Presenter</label>
-              <md-select name="select-presenter" v-model="presenter">
-                  <md-option v-for="p in presenters" :key="p.id" :value="p">{{ p.name }}</md-option>
+              <md-select name="select-presenter" v-model="presenterID">
+                  <md-option v-for="p in presenters" :key="p.id" :value="p.id">{{ p.name }}</md-option>
               </md-select>
          </md-input-container>
 
          <md-input-container>
              <label>Class</label>
-             <md-select name="select-class" v-model="commClass">
-                 <md-option v-for="c in commClasses" :key="c.id" :value="c">{{ c.name }}</md-option>
+             <md-select name="select-class" v-model="commClassID">
+                 <md-option v-for="c in commClasses" :key="c.id" :value="c.id">{{ c.name }}</md-option>
              </md-select>
         </md-input-container>
+
+        <md-input-container>
+            <label>Session</label>
+            <md-select name="select-session" v-model="classSessionID">
+                <md-option v-for="classSession in classSessions" :key="classSession.id" :value="classSession.id">{{ classSession.name }}</md-option>
+            </md-select>
+       </md-input-container>
 
           <md-button @click.native="getSpreadsheets" class="md-raised md-primary">Import</md-button>
 
@@ -60,7 +67,7 @@
                  <md-table-cell>
                      <md-input-container>
                          <md-select name="selected[index]" v-model="selected[index]" >
-                             <md-option v-for="opt in mapOptions" :key="opt.id" :value="opt.id">{{ opt.value }}</md-option>
+                             <md-option v-for="feedbackField in feedbackFields" :key="feedbackField.id" :value="feedbackField.id">{{ feedbackField.name }}</md-option>
                          </md-select>
                     </md-input-container>
                 </md-table-cell>
@@ -90,38 +97,21 @@ export default {
     name: 'spreadsheets',
     created: function() {
         this.checkAuth()
+        this.fetchClasses()
+        this.fetchPresenters()
+        this.fetchSessions()
+        this.fetchFieldMaps()
     },
     data () {
         return {
             selected:[],
-            commClass: {},
-            commClasses: [
-                {"id":"jpcc-col-b1-2016", "name": "COL Batch 1 2016", "batch":1, "year":2016},
-                {"id":"jpcc-col-b2-2016", "name": "COL Batch 2 2016", "batch":2, "year":2016},
-                {"id":"jpcc-col-b3-2016", "name": "COL Batch 3 2016", "batch":3, "year":2016},
-                {"id":"jpcc-col-b1-2017", "name": "COL Batch 1 2017", "batch":1, "year":2017}
-            ],
-            presenter:{},
-            presenters: [
-                {"id":1,"name":"Yan Hendry Jawena"},
-                {"id":2,"name":"Juferson Mangempis"},
-                {"id":3, "name":"Hendry Tjiu"},
-                {"id":4, "name":"Yvone Astri"}
-            ],
-            mapOptions : [
-                {"id":1, "value":"Timestamp"},
-                {"id":2, "value":"Nama Partisipan"},
-                {"id":3, "value":"D.A.T.E"},
-                {"id":4, "value":"Group COL"},
-                {"id":5, "value":"Penguasaan Materi"},
-                {"id":6, "value":"Sistematika Penyajian"},
-                {"id":7, "value":"Gaya atau metode penyajian"},
-                {"id":8, "value":"Pengaturan Waktu"},
-                {"id":9, "value":"Penggunaan Alat Bantu"},
-                {"id":10, "value":"Nilai keseluruhan"},
-                {"id":11, "value":"Hal-hal yang saya suka"},
-                {"id":12, "value":"Hal-hal yang saya harapkan"}
-            ],
+            classSessions:[],
+            classSessionID: 1,
+            commClassID: `jpcccol-b1-2016`,
+            commClasses: [],
+            presenterID: 1,
+            presenters: [],
+            feedbackFields:[],
             spreadsheets: {
                 id: '1pNHG0uPsMyaLjinREP4UYXXeVrUw0-3UCHZ7uxltIEQ',
                 name: 'Form Responses 1',
@@ -151,6 +141,42 @@ export default {
                 this.user.authenticated = false;
             }
         },
+        fetchClasses: function() {
+            var url = 'http://localhost:7777/class'
+            this.$http.get(url, {headers: {'Access-Control-Allow-Origin':'http://localhost:8080'}}).then(response => {
+                this.commClasses = response.data
+            }, response => {
+                alert('Whoops! Cannot get classes from ezra server. Please try again later.')
+                console.log(response.text())
+            });
+        },
+        fetchFieldMaps: function() {
+            var url = 'http://localhost:7777/feedback/field'
+            this.$http.get(url, {headers: {'Access-Control-Allow-Origin':'http://localhost:8080'}}).then(response => {
+                this.feedbackFields = response.data
+            }, response => {
+                alert('Whoops! Cannot get fields from ezra server. Please try again later.')
+                console.log(response.text())
+            });
+        },
+        fetchPresenters: function() {
+            var url = 'http://localhost:7777/presenter'
+            this.$http.get(url, {headers: {'Access-Control-Allow-Origin':'http://localhost:8080'}}).then(response => {
+                this.presenters = response.data
+            }, response => {
+                alert('Whoops! Cannot get presenters from ezra server. Please try again later.')
+                console.log(response.text())
+            });
+        },
+        fetchSessions: function() {
+            var url = 'http://localhost:7777/session'
+            this.$http.get(url, {headers: {'Access-Control-Allow-Origin':'http://localhost:8080'}}).then(response => {
+                this.classSessions = response.data
+            }, response => {
+                alert('Whoops! Cannot get sessions from ezra server. Please try again later.')
+                console.log(response.text())
+            });
+        },
         getAccessToken: function() {
             console.log(localStorage.getItem("access_token"))
             return {
@@ -177,18 +203,26 @@ export default {
 
            for (var i = 0; i < this.spreadsheets.headers.length; i++) {
                mapping.push({
-                   "field_id":i,
-                   "field_name": this.spreadsheets.headers[i],
-                   "map_id": this.selected[i]
+                   "header_id":i,
+                   "field_id": this.selected[i]
                })
            }
 
            var data = {
-               "presenter": this.presenter,
-               "class": this.commClass,
-               "mapping": mapping,
+               "presenter_id": this.presenterID,
+               "class_id": this.commClassID,
+               "session_id": this.classSessionID,
+               "mappings": mapping,
                "values": this.spreadsheets.values
            }
+
+           var url = 'http://localhost:7777/exportfeedback'
+           this.$http.post(url, data).then(response => {
+               alert('Export completed!')
+           }, response => {
+               alert('Whoops! Cannot connect to ezra. Please try again later.')
+           });
+
 
            console.log(data)
 
